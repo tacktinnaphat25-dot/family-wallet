@@ -185,17 +185,20 @@
     }
     async function del(id) {
     if(confirm('ลบรายการนี้ทั้งในเครื่องและ Cloud?')) {
-        // 1. ลบในหน้าแอปทันที
-        db = db.filter(i => i.id !== id);
+        // 1. ลบในหน้าแอปทันที (ใช้ == เพื่อให้เทียบเลขกับตัวอักษรได้)
+        db = db.filter(i => i.id != id); 
         localStorage.setItem(LOCAL_KEY, JSON.stringify(db));
         render();
 
-        // 2. ส่งคำสั่งไปลบใน Google Sheets
+        // 2. ส่งคำสั่งไปลบที่ Google Sheets
         if (GOOGLE_SHEET_URL.startsWith('http')) {
             document.getElementById('sync-status').innerText = '🗑️ กำลังลบข้อมูลใน Cloud...';
             try {
-                // ใช้ id ให้ตรงกับที่รับมาจากชื่อฟังก์ชัน
-                await fetch(`${GOOGLE_SHEET_URL}?action=delete&id=${id}`, { mode: 'no-cors' });
+                // ส่ง id ไปที่ Apps Script
+                await fetch(`${GOOGLE_SHEET_URL}?action=delete&id=${id}&t=${Date.now()}`, { 
+                    method: 'GET',
+                    mode: 'no-cors' 
+                });
                 document.getElementById('sync-status').innerText = '✅ ลบข้อมูลสำเร็จ';
             } catch (e) {
                 document.getElementById('sync-status').innerText = '⚠️ ลบใน Cloud ไม่สำเร็จ';
@@ -203,6 +206,7 @@
         }
     }
 }
+
     function render() {
         const fDate = document.getElementById('date-f').value;
         document.getElementById('v-shared').className = 'shared-card' + (current === 'กองกลาง' ? ' active' : '');
@@ -240,8 +244,7 @@
             let pfx = (i.type==='income' || i.type==='withdraw_save' || (i.type==='transfer_out' && i.owner===current) || (i.type==='transfer_in' && current==='กองกลาง')) ? '+' : '-';
             let clr = (i.type==='save' || i.type==='withdraw_save') ? 'var(--save)' : (pfx==='+' ? '#00ff88' : '#ff4757');
             if (i.type.includes('transfer')) clr = 'var(--shared)';
-            listDiv.innerHTML += `<div class="hist-item"><div><strong>${i.desc}</strong><br><small style="color:#666">${new Date(i.time).toLocaleString('th-TH')} | <span onclick="del(${i.id})" style="color:#ff4757; cursor:pointer;">ลบ</span></small></div><div style="color:${clr}; font-weight:bold">${pfx}${parseFloat(i.amt).toLocaleString()}</div></div>`;
-        });
+            listDiv.innerHTML += `<div class="hist-item"><div><strong>${i.desc}</strong><br><small style="color:#666">${new Date(i.time).toLocaleString('th-TH')} | <span onclick="del('${i.id}')" style="color:#ff4757; cursor:pointer;">ลบ</span></small></div><div style="color:${clr}; font-weight:bold">${pfx}${parseFloat(i.amt).toLocaleString()}</div></div>`;
     }
 
     pullData(); // ซิงค์ตอนเปิดแอป
