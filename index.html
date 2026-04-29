@@ -120,8 +120,8 @@
 </div>
 
 <script>
-    // --- ตั้งค่า URL ที่ได้จาก Google Apps Script ตรงนี้ ---
-    const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbxuYwCeaDgoT2kTagzWcT15ujdkUYJtMrdJH-a2MR8X_KdLz1V69oGB3yNDRgVqToQ0Yw/exec';
+    // 1. วาง URL ที่ได้จากขั้นตอน Deploy ใหม่ตรงนี้
+    const GOOGLE_SHEET_URL = 'เอา_URL_ใหม่_มาวางที่นี่';
     const LOCAL_KEY = 'family_wallet_master_final_stable';
     
     let db = JSON.parse(localStorage.getItem(LOCAL_KEY)) || [];
@@ -136,123 +136,51 @@
 
     async function pullData() {
         if (!GOOGLE_SHEET_URL.startsWith('http')) return;
-        document.getElementById('sync-status').innerText = '🔄 กำลังซิงค์ข้อมูลจาก Cloud...';
+        document.getElementById('sync-status').innerText = '🔄 กำลังซิงค์จาก Cloud...';
         try {
             const res = await fetch(GOOGLE_SHEET_URL);
             const cloudData = await res.json();
             db = cloudData;
             localStorage.setItem(LOCAL_KEY, JSON.stringify(db));
-            document.getElementById('sync-status').innerText = '✅ ซิงค์สำเร็จ: ข้อมูลเป็นปัจจุบัน';
+            document.getElementById('sync-status').innerText = '✅ ข้อมูลอัปเดตแล้ว';
             render();
         } catch (e) {
-            document.getElementById('sync-status').innerText = '❌ เชื่อม Cloud ไม่ได้ (ใช้ข้อมูลในเครื่อง)';
+            document.getElementById('sync-status').innerText = '⚠️ ใช้ข้อมูลในเครื่อง';
             render();
         }
     }
 
-    function selectUser(u) {
-        current = u;
-        document.getElementById('cur-target').innerText = u;
-        document.getElementById('cur-target').style.color = (u==='ติณห์ภัทร') ? 'var(--tin)' : (u==='นัฐณววรณ' ? 'var(--nut)' : 'var(--shared)');
-        document.getElementById('save-btn').className = 'btn-main ' + (u==='ติณห์ภัทร' ? 'btn-tin' : (u==='นัฐณววรณ' ? 'btn-nut' : 'btn-shared'));
-        render();
-    }
-
-    function quick(n, t) { document.getElementById('desc').value = n; document.getElementById('type').value = t; document.getElementById('amt').focus(); }
-
     async function saveData() {
-        const d = document.getElementById('desc').value; const t = document.getElementById('type').value; const a = parseFloat(document.getElementById('amt').value);
+        const d = document.getElementById('desc').value;
+        const t = document.getElementById('type').value;
+        const a = parseFloat(document.getElementById('amt').value);
         if(!d || !a) return alert('ใส่ข้อมูลให้ครบ');
         
-        const entry = { id: Date.now(), owner: current, desc: d, type: t, amt: a, time: new Date().toISOString() };
-        
-        // บันทึกเครื่องก่อนทันที
+        const entry = { id: Date.now().toString(), owner: current, desc: d, type: t, amt: a, time: new Date().toISOString() };
         db.push(entry);
         localStorage.setItem(LOCAL_KEY, JSON.stringify(db));
         render();
         document.getElementById('desc').value = ''; document.getElementById('amt').value = '';
 
-        // พยายามส่งไป Cloud
-        if (GOOGLE_SHEET_URL.startsWith('http')) {
-            document.getElementById('sync-status').innerText = '📤 กำลังส่งข้อมูลไป Cloud...';
-            try {
-                await fetch(GOOGLE_SHEET_URL, { method: 'POST', body: JSON.stringify(entry) });
-                document.getElementById('sync-status').innerText = '✅ บันทึก Cloud สำเร็จ';
-            } catch (e) {
-                document.getElementById('sync-status').innerText = '⚠️ บันทึกแค่ในเครื่อง (Cloud ไม่สำเร็จ)';
-            }
+        try {
+            await fetch(GOOGLE_SHEET_URL, { method: 'POST', body: JSON.stringify(entry), mode: 'no-cors' });
+            document.getElementById('sync-status').innerText = '✅ บันทึก Cloud สำเร็จ';
+        } catch (e) {
+            document.getElementById('sync-status').innerText = '❌ บันทึก Cloud ไม่สำเร็จ';
         }
     }
 
-    function del(id) {
-        if(confirm('ลบรายการนี้?')) {
-            db = db.filter(i => i.id !== id);
-            localStorage.setItem(LOCAL_KEY, JSON.stringify(db));
-            render();
-        }
-    }
-
-    function render() {
-        const fDate = document.getElementById('date-f').value;
-        document.getElementById('v-shared').className = 'shared-card' + (current === 'กองกลาง' ? ' active' : '');
-        document.getElementById('v-tin').className = 'user-card' + (current === 'ติณห์ภัทร' ? ' active-tin' : '');
-        document.getElementById('v-nut').className = 'user-card' + (current === 'นัฐณววรณ' ? ' active-nut' : '');
-        document.getElementById('v-label').innerText = current;
-
-        let w = { 'ติณห์ภัทร': 0, 'นัฐณววรณ': 0, 'กองกลาง': 0 }; 
-        let v = { 'ติณห์ภัทร': 0, 'นัฐณววรณ': 0 };
-
-        db.forEach(i => {
-            const amt = parseFloat(i.amt);
-            if(i.type === 'income') w[i.owner] += amt;
-            else if(i.type === 'expense') w[i.owner] -= amt;
-            else if(i.type === 'save') { w[i.owner] -= amt; v[i.owner] += amt; }
-            else if(i.type === 'withdraw_save') { v[i.owner] -= amt; w[i.owner] += amt; }
-            else if(i.type === 'transfer_in') { w[i.owner] -= amt; w['กองกลาง'] += amt; }
-            else if(i.type === 'transfer_out') { w['กองกลาง'] -= amt; w[i.owner] += amt; }
-        });
-
-        document.getElementById('bal-tin').innerText = '฿ ' + w['ติณห์ภัทร'].toLocaleString();
-        document.getElementById('bal-nut').innerText = '฿ ' + w['นัฐณววรณ'].toLocaleString();
-        document.getElementById('v-tin-s').innerText = '฿ ' + v['ติณห์ภัทร'].toLocaleString();
-        document.getElementById('v-nut-s').innerText = '฿ ' + v['นัฐณววรณ'].toLocaleString();
-        document.getElementById('bal-shared').innerText = '฿ ' + w['กองกลาง'].toLocaleString();
-
-        const listDiv = document.getElementById('list'); listDiv.innerHTML = '';
-        db.filter(i => {
-            const isU = i.owner === current || (current === 'กองกลาง' && (i.type === 'transfer_in' || i.type === 'transfer_out'));
-            if (!fDate) return isU;
-            const d = new Date(i.time);
-            const itemDate = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-            return isU && itemDate === fDate;
-        }).sort((a,b) => b.id - a.id).forEach(i => {
-            let pfx = (i.type==='income' || i.type==='withdraw_save' || (i.type==='transfer_out' && i.owner===current) || (i.type==='transfer_in' && current==='กองกลาง')) ? '+' : '-';
-            let clr = (i.type==='save' || i.type==='withdraw_save') ? 'var(--save)' : (pfx==='+' ? '#00ff88' : '#ff4757');
-            if (i.type.includes('transfer')) clr = 'var(--shared)';
-            listDiv.innerHTML += `<div class="hist-item"><div><strong>${i.desc}</strong><br><small style="color:#666">${new Date(i.time).toLocaleString('th-TH')} | <span onclick="del(${i.id})" style="color:#ff4757; cursor:pointer;">ลบ</span></small></div><div style="color:${clr}; font-weight:bold">${pfx}${parseFloat(i.amt).toLocaleString()}</div></div>`;
-        });
-    }
     async function del(id) {
-        if(confirm('ลบรายการนี้ทั้งในเครื่องและ Cloud?')) {
-            // 1. ลบในเครื่องทันที
-            db = db.filter(i => i.id != id);
-            localStorage.setItem(LOCAL_KEY, JSON.stringify(db));
-            render();
+        if(!confirm('ลบรายการนี้ทั้งในเครื่องและ Cloud?')) return;
+        db = db.filter(i => i.id != id);
+        localStorage.setItem(LOCAL_KEY, JSON.stringify(db));
+        render();
 
-            // 2. ส่งคำสั่งไปลบใน Google Sheets
-            if (GOOGLE_SHEET_URL.startsWith('http')) {
-                document.getElementById('sync-status').innerText = '🗑️ กำลังลบข้อมูลใน Cloud...';
-                try {
-                    // ส่ง id ไปที่ Apps Script พร้อม Timestamp ป้องกัน Cache
-                    await fetch(`${GOOGLE_SHEET_URL}?action=delete&id=${id}&t=${Date.now()}`, { 
-                        method: 'GET', 
-                        mode: 'no-cors' 
-                    });
-                    document.getElementById('sync-status').innerText = '✅ ลบข้อมูลสำเร็จ';
-                } catch (e) {
-                    document.getElementById('sync-status').innerText = '⚠️ ลบใน Cloud ไม่สำเร็จ';
-                }
-            }
+        try {
+            await fetch(`${GOOGLE_SHEET_URL}?action=delete&id=${id}&t=${Date.now()}`, { mode: 'no-cors' });
+            document.getElementById('sync-status').innerText = '🗑️ ลบใน Cloud สำเร็จ';
+        } catch (e) {
+            document.getElementById('sync-status').innerText = '❌ ลบใน Cloud ไม่สำเร็จ';
         }
     }
 
@@ -275,33 +203,28 @@
 
         document.getElementById('bal-tin').innerText = '฿ ' + w['ติณห์ภัทร'].toLocaleString();
         document.getElementById('bal-nut').innerText = '฿ ' + w['นัฐณววรณ'].toLocaleString();
+        document.getElementById('v-tin-s').innerText = '฿ ' + v['ติณห์ภัทร'].toLocaleString();
+        document.getElementById('v-nut-s').innerText = '฿ ' + v['นัฐณววรณ'].toLocaleString();
         document.getElementById('bal-shared').innerText = '฿ ' + w['กองกลาง'].toLocaleString();
 
-        const listDiv = document.getElementById('list'); 
-        if(!listDiv) return;
+        const listDiv = document.getElementById('list');
         listDiv.innerHTML = '';
-
         db.filter(i => {
-            const isU = i.owner === current || (current === 'กองกลาง' && (i.type === 'transfer_in' || i.type === 'transfer_out'));
-            return isU;
+            const isU = i.owner === current || (current === 'กองกลาง' && (i.type.includes('transfer')));
+            if (!fDate) return isU;
+            return isU && i.time.startsWith(fDate);
         }).sort((a,b) => b.id - a.id).forEach(i => {
-            let pfx = (i.type==='income' || i.type==='withdraw_save' || (i.type==='transfer_out' && i.owner===current)) ? '+' : '-';
+            let pfx = (i.type==='income' || i.type==='withdraw_save' || (i.type==='transfer_out' && i.owner===current) || (i.type==='transfer_in' && current==='กองกลาง')) ? '+' : '-';
             let clr = (pfx === '+') ? '#00ff88' : '#ff4757';
-            
-            listDiv.innerHTML += `
-                <div class="hist-item">
-                    <div>
-                        <strong>${i.desc}</strong><br>
-                        <small style="color:#666">${new Date(i.time).toLocaleString('th-TH')} | 
-                        <span onclick="del('${i.id}')" style="color:#ff4757; cursor:pointer;">ลบ</span></small>
-                    </div>
-                    <div style="color:${clr}; font-weight:bold">${pfx}${parseFloat(i.amt).toLocaleString()}</div>
-                </div>`;
+            listDiv.innerHTML += `<div class="hist-item">
+                <div><strong>${i.desc}</strong><br><small style="color:#666">${new Date(i.time).toLocaleString('th-TH')} | <span onclick="del('${i.id}')" style="color:red; cursor:pointer;">ลบ</span></small></div>
+                <div style="color:${clr}; font-weight:bold">${pfx}${parseFloat(i.amt).toLocaleString()}</div>
+            </div>`;
         });
     }
 
-    pullData(); // ซิงค์ตอนเปิดแอป
-    selectUser('ติณห์ภัทร');
+    function selectUser(u) { current = u; render(); }
+    pullData();
 </script>
 </body>
 </html>
