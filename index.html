@@ -236,6 +236,39 @@
 
     pullData(); // ซิงค์ตอนเปิดแอป
     selectUser('ติณห์ภัทร');
+<script>
+  // 1. ฟังก์ชันสำหรับปุ่มรายการต่างๆ (รวมถึงรถยนต์)
+  function quick(name, type) {
+    // นำชื่อไปใส่ในช่องบันทึก
+    const descInput = document.getElementById('desc-placeholder');
+    if (descInput) {
+      descInput.value = name;
+    }
+
+    // แสดงชื่อรายการที่เลือกบนหน้าจอ
+    const targetDisplay = document.getElementById('cur-target');
+    if (targetDisplay) {
+      targetDisplay.innerText = name;
+    }
+    
+    console.log("เลือกรายการ:", name, "ประเภท:", type);
+  }
+
+  // 2. ฟังก์ชันสำหรับปุ่มดึงข้อมูลใหม่
+  function pullData() {
+    alert("กำลังรีเฟรชเพื่อดึงข้อมูลล่าสุด...");
+    // สั่งให้หน้าเว็บโหลดใหม่
+    location.reload();
+  }
+
+  // 3. ฟังก์ชันอื่นๆ ที่คุณอาจมี (เช่น เลือกผู้ใช้เริ่มต้น)
+  // หมายเหตุ: ห้ามใส่ pullData(); ไว้ตรงนี้ เพราะจะทำให้หน้าเว็บรีเฟรชไม่จบสิ้น
+  window.onload = function() {
+    console.log("หน้าเว็บพร้อมใช้งาน");
+    // ถ้าต้องการให้เลือก user เริ่มต้น ให้เอาเครื่องหมาย // ออกข้างล่างนี้
+    // selectUser('ชื่อของคุณ'); 
+  };
 </script>
+
 </body>
 </html>
