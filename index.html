@@ -121,7 +121,7 @@
 
 <script>
     // --- ตั้งค่า URL ที่ได้จาก Google Apps Script ตรงนี้ ---
-    const GOOGLE_SHEET_URL = 'ใส่_URL_แอปเว็บ_ตรงนี้';
+    const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbxuYwCeaDgoT2kTagzWcT15ujdkUYJtMrdJH-a2MR8X_KdLz1V69oGB3yNDRgVqToQ0Yw/exec';
     const LOCAL_KEY = 'family_wallet_master_final_stable';
     
     let db = JSON.parse(localStorage.getItem(LOCAL_KEY)) || [];
@@ -230,6 +230,73 @@
             let clr = (i.type==='save' || i.type==='withdraw_save') ? 'var(--save)' : (pfx==='+' ? '#00ff88' : '#ff4757');
             if (i.type.includes('transfer')) clr = 'var(--shared)';
             listDiv.innerHTML += `<div class="hist-item"><div><strong>${i.desc}</strong><br><small style="color:#666">${new Date(i.time).toLocaleString('th-TH')} | <span onclick="del(${i.id})" style="color:#ff4757; cursor:pointer;">ลบ</span></small></div><div style="color:${clr}; font-weight:bold">${pfx}${parseFloat(i.amt).toLocaleString()}</div></div>`;
+        });
+    }
+    async function del(id) {
+        if(confirm('ลบรายการนี้ทั้งในเครื่องและ Cloud?')) {
+            // 1. ลบในเครื่องทันที
+            db = db.filter(i => i.id != id);
+            localStorage.setItem(LOCAL_KEY, JSON.stringify(db));
+            render();
+
+            // 2. ส่งคำสั่งไปลบใน Google Sheets
+            if (GOOGLE_SHEET_URL.startsWith('http')) {
+                document.getElementById('sync-status').innerText = '🗑️ กำลังลบข้อมูลใน Cloud...';
+                try {
+                    // ส่ง id ไปที่ Apps Script พร้อม Timestamp ป้องกัน Cache
+                    await fetch(`${GOOGLE_SHEET_URL}?action=delete&id=${id}&t=${Date.now()}`, { 
+                        method: 'GET', 
+                        mode: 'no-cors' 
+                    });
+                    document.getElementById('sync-status').innerText = '✅ ลบข้อมูลสำเร็จ';
+                } catch (e) {
+                    document.getElementById('sync-status').innerText = '⚠️ ลบใน Cloud ไม่สำเร็จ';
+                }
+            }
+        }
+    }
+
+    function render() {
+        const fDate = document.getElementById('date-f').value;
+        document.getElementById('v-label').innerText = current;
+
+        let w = { 'ติณห์ภัทร': 0, 'นัฐณววรณ': 0, 'กองกลาง': 0 }; 
+        let v = { 'ติณห์ภัทร': 0, 'นัฐณววรณ': 0 };
+
+        db.forEach(i => {
+            const amt = parseFloat(i.amt) || 0;
+            if(i.type === 'income') w[i.owner] += amt;
+            else if(i.type === 'expense') w[i.owner] -= amt;
+            else if(i.type === 'save') { w[i.owner] -= amt; v[i.owner] += amt; }
+            else if(i.type === 'withdraw_save') { v[i.owner] -= amt; w[i.owner] += amt; }
+            else if(i.type === 'transfer_in') { w[i.owner] -= amt; w['กองกลาง'] += amt; }
+            else if(i.type === 'transfer_out') { w['กองกลาง'] -= amt; w[i.owner] += amt; }
+        });
+
+        document.getElementById('bal-tin').innerText = '฿ ' + w['ติณห์ภัทร'].toLocaleString();
+        document.getElementById('bal-nut').innerText = '฿ ' + w['นัฐณววรณ'].toLocaleString();
+        document.getElementById('bal-shared').innerText = '฿ ' + w['กองกลาง'].toLocaleString();
+
+        const listDiv = document.getElementById('list'); 
+        if(!listDiv) return;
+        listDiv.innerHTML = '';
+
+        db.filter(i => {
+            const isU = i.owner === current || (current === 'กองกลาง' && (i.type === 'transfer_in' || i.type === 'transfer_out'));
+            return isU;
+        }).sort((a,b) => b.id - a.id).forEach(i => {
+            let pfx = (i.type==='income' || i.type==='withdraw_save' || (i.type==='transfer_out' && i.owner===current)) ? '+' : '-';
+            let clr = (pfx === '+') ? '#00ff88' : '#ff4757';
+            
+            listDiv.innerHTML += `
+                <div class="hist-item">
+                    <div>
+                        <strong>${i.desc}</strong><br>
+                        <small style="color:#666">${new Date(i.time).toLocaleString('th-TH')} | 
+                        <span onclick="del('${i.id}')" style="color:#ff4757; cursor:pointer;">ลบ</span></small>
+                    </div>
+                    <div style="color:${clr}; font-weight:bold">${pfx}${parseFloat(i.amt).toLocaleString()}</div>
+                </div>`;
         });
     }
 
