@@ -119,8 +119,8 @@
     </div>
 </div>
 
-<script>
-    // 1. วาง URL ที่ได้จากขั้นตอน Deploy ใหม่ตรงนี้
+<<script>
+    // 1. ใส่ URL ของ Google Apps Script ของคุณตรงนี้
     const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbxzjQiqsUGBWCqbvO92Oh9Q5-IFpoMjXItFV2odcbnSJDo2fvnyKN3v8RlgmamAp7QWhQ/exec';
     const LOCAL_KEY = 'family_wallet_master_final_stable';
     
@@ -129,30 +129,54 @@
 
     function clock() {
         const now = new Date();
-        document.getElementById('clock-t').innerText = now.toLocaleTimeString('th-TH');
-        document.getElementById('clock-d').innerText = now.toLocaleDateString('th-TH', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+        const t = document.getElementById('clock-t');
+        const d = document.getElementById('clock-d');
+        if(t) t.innerText = now.toLocaleTimeString('th-TH');
+        if(d) d.innerText = now.toLocaleDateString('th-TH', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
     }
     setInterval(clock, 1000); clock();
 
     async function pullData() {
         if (!GOOGLE_SHEET_URL.startsWith('http')) return;
-        document.getElementById('sync-status').innerText = '🔄 กำลังซิงค์จาก Cloud...';
+        document.getElementById('sync-status').innerText = '🔄 กำลังซิงค์ข้อมูลจาก Cloud...';
         try {
             const res = await fetch(GOOGLE_SHEET_URL);
             const cloudData = await res.json();
             db = cloudData;
             localStorage.setItem(LOCAL_KEY, JSON.stringify(db));
-            document.getElementById('sync-status').innerText = '✅ ข้อมูลอัปเดตแล้ว';
+            document.getElementById('sync-status').innerText = '✅ ข้อมูลเป็นปัจจุบัน';
             render();
         } catch (e) {
-            document.getElementById('sync-status').innerText = '⚠️ ใช้ข้อมูลในเครื่อง';
+            document.getElementById('sync-status').innerText = '⚠️ โหมดออฟไลน์';
             render();
         }
     }
 
+    // ฟังก์ชันเลือกผู้ใช้ (แก้ไขเพื่อให้เปลี่ยนชื่อและสีปุ่มได้)
+    function selectUser(u) {
+        current = u;
+        document.getElementById('cur-target').innerText = u;
+        // ปรับสีชื่อตามผู้ใช้
+        const colorMap = { 'ติณห์ภัทร': 'var(--tin)', 'นัฐณววรณ': 'var(--nut)', 'กองกลาง': 'var(--shared)' };
+        document.getElementById('cur-target').style.color = colorMap[u] || 'white';
+        
+        // ปรับสีปุ่มบันทึก
+        const btnClassMap = { 'ติณห์ภัทร': 'btn-tin', 'นัฐณววรณ': 'btn-nut', 'กองกลาง': 'btn-shared' };
+        const saveBtn = document.getElementById('save-btn');
+        saveBtn.className = 'btn-main ' + (btnClassMap[u] || '');
+        
+        render();
+    }
+
+    function quick(n, t) { 
+        document.getElementById('desc').value = n; 
+        document.getElementById('type').value = t; 
+        document.getElementById('amt').focus(); 
+    }
+
     async function saveData() {
-        const d = document.getElementById('desc').value;
-        const t = document.getElementById('type').value;
+        const d = document.getElementById('desc').value; 
+        const t = document.getElementById('type').value; 
         const a = parseFloat(document.getElementById('amt').value);
         if(!d || !a) return alert('ใส่ข้อมูลให้ครบ');
         
@@ -188,6 +212,11 @@
         const fDate = document.getElementById('date-f').value;
         document.getElementById('v-label').innerText = current;
 
+        // อัปเดตสถานะ Active ของการ์ดผู้ใช้
+        document.getElementById('v-shared').className = 'shared-card' + (current === 'กองกลาง' ? ' active' : '');
+        document.getElementById('v-tin').className = 'user-card' + (current === 'ติณห์ภัทร' ? ' active-tin' : '');
+        document.getElementById('v-nut').className = 'user-card' + (current === 'นัฐณววรณ' ? ' active-nut' : '');
+
         let w = { 'ติณห์ภัทร': 0, 'นัฐณววรณ': 0, 'กองกลาง': 0 }; 
         let v = { 'ติณห์ภัทร': 0, 'นัฐณววรณ': 0 };
 
@@ -208,14 +237,20 @@
         document.getElementById('bal-shared').innerText = '฿ ' + w['กองกลาง'].toLocaleString();
 
         const listDiv = document.getElementById('list');
+        if(!listDiv) return;
         listDiv.innerHTML = '';
+
         db.filter(i => {
             const isU = i.owner === current || (current === 'กองกลาง' && (i.type.includes('transfer')));
             if (!fDate) return isU;
-            return isU && i.time.startsWith(fDate);
+            const d = new Date(i.time);
+            const itemDate = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+            return isU && itemDate === fDate;
         }).sort((a,b) => b.id - a.id).forEach(i => {
             let pfx = (i.type==='income' || i.type==='withdraw_save' || (i.type==='transfer_out' && i.owner===current) || (i.type==='transfer_in' && current==='กองกลาง')) ? '+' : '-';
-            let clr = (pfx === '+') ? '#00ff88' : '#ff4757';
+            let clr = (i.type==='save' || i.type==='withdraw_save') ? 'var(--save)' : (pfx==='+' ? '#00ff88' : '#ff4757');
+            if (i.type.includes('transfer')) clr = 'var(--shared)';
+            
             listDiv.innerHTML += `<div class="hist-item">
                 <div><strong>${i.desc}</strong><br><small style="color:#666">${new Date(i.time).toLocaleString('th-TH')} | <span onclick="del('${i.id}')" style="color:red; cursor:pointer;">ลบ</span></small></div>
                 <div style="color:${clr}; font-weight:bold">${pfx}${parseFloat(i.amt).toLocaleString()}</div>
@@ -223,8 +258,6 @@
         });
     }
 
-    function selectUser(u) { current = u; render(); }
-    pullData();
+    pullData(); 
+    selectUser('ติณห์ภัทร'); // เริ่มต้นที่ติณห์ภัทร
 </script>
-</body>
-</html>
