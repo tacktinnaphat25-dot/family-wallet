@@ -207,13 +207,11 @@
     }
 }
 
-    function render() {
+        function render() {
         const fDate = document.getElementById('date-f').value;
-        document.getElementById('v-shared').className = 'shared-card' + (current === 'กองกลาง' ? ' active' : '');
-        document.getElementById('v-tin').className = 'user-card' + (current === 'ติณห์ภัทร' ? ' active-tin' : '');
-        document.getElementById('v-nut').className = 'user-card' + (current === 'นัฐณววรณ' ? ' active-nut' : '');
         document.getElementById('v-label').innerText = current;
 
+        // คำนวณยอดเงิน
         let w = { 'ติณห์ภัทร': 0, 'นัฐณววรณ': 0, 'กองกลาง': 0 }; 
         let v = { 'ติณห์ภัทร': 0, 'นัฐณววรณ': 0 };
 
@@ -227,26 +225,33 @@
             else if(i.type === 'transfer_out') { w['กองกลาง'] -= amt; w[i.owner] += amt; }
         });
 
+        // แสดงยอดเงินบนหน้าจอ
         document.getElementById('bal-tin').innerText = '฿ ' + w['ติณห์ภัทร'].toLocaleString();
         document.getElementById('bal-nut').innerText = '฿ ' + w['นัฐณววรณ'].toLocaleString();
-        document.getElementById('v-tin-s').innerText = '฿ ' + v['ติณห์ภัทร'].toLocaleString();
-        document.getElementById('v-nut-s').innerText = '฿ ' + v['นัฐณววรณ'].toLocaleString();
         document.getElementById('bal-shared').innerText = '฿ ' + w['กองกลาง'].toLocaleString();
 
-        const listDiv = document.getElementById('list'); listDiv.innerHTML = '';
+        const listDiv = document.getElementById('list'); 
+        listDiv.innerHTML = '';
+
+        // แสดงรายการ
         db.filter(i => {
             const isU = i.owner === current || (current === 'กองกลาง' && (i.type === 'transfer_in' || i.type === 'transfer_out'));
-            if (!fDate) return isU;
-            const d = new Date(i.time);
-            const itemDate = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-            return isU && itemDate === fDate;
+            return isU;
         }).sort((a,b) => b.id - a.id).forEach(i => {
-            let pfx = (i.type==='income' || i.type==='withdraw_save' || (i.type==='transfer_out' && i.owner===current) || (i.type==='transfer_in' && current==='กองกลาง')) ? '+' : '-';
-            let clr = (i.type==='save' || i.type==='withdraw_save') ? 'var(--save)' : (pfx==='+' ? '#00ff88' : '#ff4757');
-            if (i.type.includes('transfer')) clr = 'var(--shared)';
-            listDiv.innerHTML += `<div class="hist-item"><div><strong>${i.desc}</strong><br><small style="color:#666">${new Date(i.time).toLocaleString('th-TH')} | <span onclick="del('${i.id}')" style="color:#ff4757; cursor:pointer;">ลบ</span></small></div><div style="color:${clr}; font-weight:bold">${pfx}${parseFloat(i.amt).toLocaleString()}</div></div>`;
+            let pfx = (i.type==='income' || i.type==='withdraw_save' || (i.type==='transfer_out' && i.owner===current)) ? '+' : '-';
+            let clr = (pfx === '+') ? '#00ff88' : '#ff4757';
+            
+            listDiv.innerHTML += `
+                <div class="hist-item">
+                    <div>
+                        <strong>${i.desc}</strong><br>
+                        <small style="color:#666">${new Date(i.time).toLocaleString('th-TH')} | 
+                        <span onclick="del('${i.id}')" style="color:#ff4757; cursor:pointer;">ลบ</span></small>
+                    </div>
+                    <div style="color:${clr}; font-weight:bold">${pfx}${parseFloat(i.amt).toLocaleString()}</div>
+                </div>`;
+        });
     }
-
     pullData(); // ซิงค์ตอนเปิดแอป
     selectUser('ติณห์ภัทร');
 </script>
