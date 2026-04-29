@@ -207,11 +207,10 @@
     }
 }
 
-        function render() {
+            function render() {
         const fDate = document.getElementById('date-f').value;
         document.getElementById('v-label').innerText = current;
 
-        // คำนวณยอดเงิน
         let w = { 'ติณห์ภัทร': 0, 'นัฐณววรณ': 0, 'กองกลาง': 0 }; 
         let v = { 'ติณห์ภัทร': 0, 'นัฐณววรณ': 0 };
 
@@ -225,15 +224,14 @@
             else if(i.type === 'transfer_out') { w['กองกลาง'] -= amt; w[i.owner] += amt; }
         });
 
-        // แสดงยอดเงินบนหน้าจอ
-        document.getElementById('bal-tin').innerText = '฿ ' + w['ติณห์ภัทร'].toLocaleString();
-        document.getElementById('bal-nut').innerText = '฿ ' + w['นัฐณววรณ'].toLocaleString();
-        document.getElementById('bal-shared').innerText = '฿ ' + w['กองกลาง'].toLocaleString();
+        if(document.getElementById('bal-tin')) document.getElementById('bal-tin').innerText = '฿ ' + w['ติณห์ภัทร'].toLocaleString();
+        if(document.getElementById('bal-nut')) document.getElementById('bal-nut').innerText = '฿ ' + w['นัฐณววรณ'].toLocaleString();
+        if(document.getElementById('bal-shared')) document.getElementById('bal-shared').innerText = '฿ ' + w['กองกลาง'].toLocaleString();
 
         const listDiv = document.getElementById('list'); 
+        if(!listDiv) return;
         listDiv.innerHTML = '';
 
-        // แสดงรายการ
         db.filter(i => {
             const isU = i.owner === current || (current === 'กองกลาง' && (i.type === 'transfer_in' || i.type === 'transfer_out'));
             return isU;
@@ -252,6 +250,10 @@
                 </div>`;
         });
     }
+
+    pullData(); 
+    selectUser('ติณห์ภัทร');
+</script>
     pullData(); // ซิงค์ตอนเปิดแอป
     selectUser('ติณห์ภัทร');
 </script>
