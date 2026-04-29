@@ -121,7 +121,7 @@
 
 <script>
     // --- ตั้งค่า URL ที่ได้จาก Google Apps Script ตรงนี้ ---
-    const GOOGLE_SHEET_URL = 'ใส่_URL_แอปเว็บ_ตรงนี้';
+    const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbxli8eC3_rUGXaFKBdwsjrxYBkNp8jTZL7EFkuBHL_G2raCi4t9_OHUm0hj3uTvdjWtmA/exec';
     const LOCAL_KEY = 'family_wallet_master_final_stable';
     
     let db = JSON.parse(localStorage.getItem(LOCAL_KEY)) || [];
@@ -176,7 +176,7 @@
         if (GOOGLE_SHEET_URL.startsWith('http')) {
             document.getElementById('sync-status').innerText = '📤 กำลังส่งข้อมูลไป Cloud...';
             try {
-                await fetch(GOOGLE_SHEET_URL, { method: 'POST', body: JSON.stringify(entry) });
+               await fetch(GOOGLE_SHEET_URL, { method: 'POST', body: JSON.stringify(entry), mode: 'no-cors' });
                 document.getElementById('sync-status').innerText = '✅ บันทึก Cloud สำเร็จ';
             } catch (e) {
                 document.getElementById('sync-status').innerText = '⚠️ บันทึกแค่ในเครื่อง (Cloud ไม่สำเร็จ)';
