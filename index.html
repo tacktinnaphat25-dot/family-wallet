@@ -183,15 +183,26 @@
             }
         }
     }
+    async function del(id) {
+    if(confirm('ลบรายการนี้ทั้งในเครื่องและ Cloud?')) {
+        // 1. ลบในหน้าแอปทันที
+        db = db.filter(i => i.id !== id);
+        localStorage.setItem(LOCAL_KEY, JSON.stringify(db));
+        render();
 
-    function del(id) {
-        if(confirm('ลบรายการนี้?')) {
-            db = db.filter(i => i.id !== id);
-            localStorage.setItem(LOCAL_KEY, JSON.stringify(db));
-            render();
+        // 2. ส่งคำสั่งไปลบใน Google Sheets
+        if (GOOGLE_SHEET_URL.startsWith('http')) {
+            document.getElementById('sync-status').innerText = '🗑️ กำลังลบข้อมูลใน Cloud...';
+            try {
+                // ใช้ id ให้ตรงกับที่รับมาจากชื่อฟังก์ชัน
+                await fetch(`${GOOGLE_SHEET_URL}?action=delete&id=${id}`, { mode: 'no-cors' });
+                document.getElementById('sync-status').innerText = '✅ ลบข้อมูลสำเร็จ';
+            } catch (e) {
+                document.getElementById('sync-status').innerText = '⚠️ ลบใน Cloud ไม่สำเร็จ';
+            }
         }
     }
-
+}
     function render() {
         const fDate = document.getElementById('date-f').value;
         document.getElementById('v-shared').className = 'shared-card' + (current === 'กองกลาง' ? ' active' : '');
