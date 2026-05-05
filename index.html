@@ -78,6 +78,8 @@
             <button class="tag-btn" onclick="quick('ถอนเงินออม', 'withdraw_save')" style="color:var(--save)">🔓 ถอนออม</button>
             <button class="tag-btn" onclick="quick('โอนเข้ากองกลาง', 'transfer_in')" style="color:var(--shared)">📩 เข้ากลาง</button>
             <button class="tag-btn" onclick="quick('ถอนเงินกองกลาง', 'transfer_out')" style="color:var(--shared)">🔓 ถอนกลาง</button>
+            <!-- ➕ ปุ่มใหม่: โอนข้ามบัญชี -->
+            <button class="tag-btn" onclick="quick('โอนเงินให้กัน', 'transfer_cross')" style="color:var(--accent); grid-column: span 3;">🔄 โอนข้ามบัญชี</button>
         </div>
         <span class="label">🚗 เดินทาง & รถ</span>
         <div class="btn-grid">
@@ -109,6 +111,8 @@
             <option value="withdraw_save">ถอนออม (🔓)</option>
             <option value="transfer_in">โอนเข้ากองกลาง (📩)</option>
             <option value="transfer_out">ถอนจากกองกลาง (🔓)</option>
+            <!-- ➕ ตัวเลือกใหม่: โอนข้ามบัญชี -->
+            <option value="transfer_cross">โอนข้ามบัญชี (🔄)</option>
         </select>
         <button id="save-btn" class="btn-main btn-tin" onclick="saveData()">🚀 บันทึกข้อมูล</button>
     </div>
@@ -143,13 +147,46 @@
     let current = 'ติณห์ภัทร';
     let isShowAll = false;
 
-    function getThaiDate(dateObj) {
-        const d = new Date(dateObj);
-        return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
+    function getBangkokTime() {
+        return new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Bangkok" }));
+    }
+
+    function getThaiDate(dateInput) {
+        let d = getBangkokTime();
+        if (dateInput) {
+            let s = String(dateInput).trim();
+            if (s.includes('/256') || s.includes('/257') || s.startsWith('256') || s.startsWith('257')) {
+                let p = s.split('T').split(/[-/]/);
+                if (p.length === 4) {
+                    p = String(parseInt(p) - 543);
+                    s = `${p}-${p}-${p}`;
+                } else if (p && p.length === 4) {
+                    p = String(parseInt(p) - 543);
+                    s = `${p}-${p}-${p}`;
+                }
+            }
+            d = new Date(s.replace(' ', 'T'));
+            if (isNaN(d.getTime())) d = getBangkokTime();
+        }
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    function getThaiFullTimestamp() {
+        const d = getBangkokTime();
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const hours = String(d.getHours()).padStart(2, '0');
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        const seconds = String(d.getSeconds()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}+07:00`;
     }
 
     function clock() {
-        const now = new Date();
+        const now = getBangkokTime();
         document.getElementById('clock-t').innerText = now.toLocaleTimeString('th-TH');
         document.getElementById('clock-d').innerText = now.toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     }
@@ -180,7 +217,7 @@
     function toggleAll() {
         isShowAll = !isShowAll;
         if(isShowAll) document.getElementById('date-f').value = ''; 
-        else document.getElementById('date-f').value = getThaiDate(new Date());
+        else document.getElementById('date-f').value = getThaiDate();
         render();
     }
 
@@ -189,7 +226,12 @@
     async function saveData() {
         const d = document.getElementById('desc').value; const t = document.getElementById('type').value; const a = parseFloat(document.getElementById('amt').value);
         if(!d || !a) return alert('ใส่ข้อมูลให้ครบ');
-        const entry = { id: Date.now().toString(), owner: current, desc: d, type: t, amt: a, time: new Date().toLocaleString('sv-SE') };
+        
+        if (t === 'transfer_cross' && current === 'กองกลาง') {
+            return alert('ไม่สามารถโอนข้ามบัญชีจาก "กองกลาง" ได้');
+        }
+
+        const entry = { id: Date.now().toString(), owner: current, desc: d, type: t, amt: a, time: getThaiFullTimestamp() };
         db.push(entry); localStorage.setItem(LOCAL_KEY, JSON.stringify(db));
         render(); document.getElementById('desc').value = ''; document.getElementById('amt').value = '';
         try { await fetch(GOOGLE_SHEET_URL, { method: 'POST', body: JSON.stringify(entry), mode: 'no-cors' }); pullData(); } catch (e) {}
@@ -216,11 +258,10 @@
         document.getElementById('v-tin').className = 'user-card' + (current === 'ติณห์ภัทร' ? ' active-tin' : '');
         document.getElementById('v-nut').className = 'user-card' + (current === 'นัฐณวรรณ' ? ' active-nut' : '');
 
-        // --- เริ่มต้นคำนวณเงินใหม่ทุกครั้ง ---
         let balances = { 'ติณห์ภัทร': 0, 'นัฐณวรรณ': 0, 'กองกลาง': 0 }; 
         let savings = { 'ติณห์ภัทร': 0, 'นัฐณวรรณ': 0 };
         let dTin = 0, dNut = 0;
-        const today = getThaiDate(new Date());
+        const today = getThaiDate();
         const targetDate = fDate || today;
 
         db.forEach(i => {
@@ -228,13 +269,11 @@
             const itemDate = getThaiDate(i.time);
             const ownerRaw = i.owner || "";
             
-            // --- ระบบคัดกรองชื่อแบบ Keyword (วรรณ/ววรณ/ติณห์) ---
             let ownerKey = "";
             if (ownerRaw.includes('ติณห์')) ownerKey = 'ติณห์ภัทร';
             else if (ownerRaw.includes('นัฐ')) ownerKey = 'นัฐณวรรณ';
             else if (ownerRaw.includes('กลาง')) ownerKey = 'กองกลาง';
 
-            // 1. คำนวณยอดเงินรายคนและออม
             if (ownerKey) {
                 if (i.type === 'income') balances[ownerKey] += amt;
                 else if (i.type === 'expense') {
@@ -247,14 +286,21 @@
                 else if (i.type === 'withdraw_save') { savings[ownerKey] -= amt; balances[ownerKey] += amt; }
                 else if (i.type === 'transfer_in') { balances[ownerKey] -= amt; balances['กองกลาง'] += amt; }
                 else if (i.type === 'transfer_out') { balances['กองกลาง'] -= amt; balances[ownerKey] += amt; }
+                else if (i.type === 'transfer_cross') { 
+                    // หักเงินจากคนโอน ไปเพิ่มให้อีกคน
+                    balances[ownerKey] -= amt;
+                    const receiverKey = (ownerKey === 'ติณห์ภัทร') ? 'นัฐณวรรณ' : 'ติณห์ภัทร';
+                    balances[receiverKey] += amt;
+                }
             }
 
-            // 2. แสดงประวัติ (กรองตามคนที่เลือก และวันที่)
             let isMatch = false;
             if (current === 'กองกลาง') {
                 if (ownerKey === 'กองกลาง' || i.type === 'transfer_in' || i.type === 'transfer_out') isMatch = true;
             } else {
                 if (current === ownerKey) isMatch = true;
+                // ถ้าเป็นรายการโอนข้ามบัญชี ให้แสดงในประวัติของทั้งสองคน
+                if (i.type === 'transfer_cross') isMatch = true;
             }
 
             if (isMatch) {
@@ -271,9 +317,28 @@
                         else if (i.type === 'income') { color = 'var(--accent)'; sign = '+'; }
                     } else {
                         if (['income', 'withdraw_save', 'transfer_out'].includes(i.type)) { color = 'var(--accent)'; sign = '+'; }
+                        
+                        // ปรับแต่งสีและเครื่องหมายเฉพาะการโอนข้ามบัญชี
+                        if (i.type === 'transfer_cross') {
+                            if (current === ownerKey) { color = '#ff4b2b'; sign = '-'; } // เป็นคนโอน
+                            else { color = 'var(--accent)'; sign = '+'; } // เป็นคนรับ
+                        }
                     }
 
-                    div.innerHTML = `<div><div style="font-size:0.9rem; font-weight:500;">${i.desc}</div><div style="font-size:0.7rem; color:#666">${new Date(i.time).toLocaleString('th-TH')}</div></div>
+                    let cTime = i.time ? String(i.time).replace(' ', 'T') : '';
+                    if (cTime.includes('/256') || cTime.includes('/257') || cTime.startsWith('256') || cTime.startsWith('257')) {
+                        let p = cTime.split('T').split(/[-/]/);
+                        if (p.length === 4) {
+                            p = String(parseInt(p) - 543);
+                            cTime = `${p}-${p}-${p}T${cTime.split('T') || ''}`;
+                        } else if (p && p.length === 4) {
+                            p = String(parseInt(p) - 543);
+                            cTime = `${p}-${p}-${p}T${cTime.split('T') || ''}`;
+                        }
+                    }
+                    const displayTime = cTime ? new Date(cTime).toLocaleString('th-TH') : 'N/A';
+
+                    div.innerHTML = `<div><div style="font-size:0.9rem; font-weight:500;">${i.desc}</div><div style="font-size:0.7rem; color:#666">${displayTime}</div></div>
                                      <div style="color:${color}; font-weight:bold;">${sign}${amt.toLocaleString()}</div>`;
                     list.prepend(div);
                 }
@@ -289,7 +354,10 @@
         document.getElementById('daily-nut').innerText = `฿ ${dNut.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
     }
 
-    window.onload = () => { document.getElementById('date-f').value = getThaiDate(new Date()); pullData(); };
+    window.onload = () => { 
+        document.getElementById('date-f').value = getThaiDate(); 
+        pullData(); 
+    };
 </script>
 </body>
 </html>
