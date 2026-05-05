@@ -6,102 +6,100 @@
     <title>Family Wallet Sync - Master Edition</title>
     <link href="https://googleapis.com" rel="stylesheet">
     <style>
-        :root { --tin: #00d2ff; --nut: #ff69b4; --shared: #a29bfe; --save: #ffd700; --bg: #0d0f11; --card: #161a1d; }
+        :root { --tin: #00d2ff; --nut: #ff69b4; --shared: #a29bfe; --save: #ffd700; --bg: #0d0f11; --card: #161a1d; --accent: #00ff88; }
         * { box-sizing: border-box; font-family: 'Kanit', sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background-color: var(--bg); margin: 0; padding: 10px; color: #e0e0e0; overflow-x: hidden; }
-        .container { max-width: 500px; margin: auto; padding-bottom: 50px; }
-        .live-clock { text-align: center; margin-bottom: 10px; background: var(--card); padding: 10px; border-radius: 20px; border: 1px solid #333; }
-        .time { font-size: 1.6rem; font-weight: bold; color: #00ff88; text-shadow: 0 0 10px rgba(0, 255, 136, 0.3); }
-        .sync-status { font-size: 0.65rem; color: #888; text-align: center; margin-bottom: 10px; }
-        .shared-card { background: linear-gradient(135deg, #1a1d21, #000); border-radius: 20px; padding: 15px; text-align: center; border: 1px solid #333; margin-bottom: 12px; cursor: pointer; position: relative; transition: 0.3s; }
-        .shared-card.active { border-color: var(--shared); box-shadow: 0 0 15px rgba(162, 155, 254, 0.3); background: #1c1a25; }
-        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
-        .user-card { background: var(--card); padding: 12px; border-radius: 15px; border: 1px solid #333; text-align: center; cursor: pointer; transition: 0.3s; position: relative; }
-        .user-card.active-tin { border-color: var(--tin); box-shadow: 0 0 10px var(--tin); background: #1c2227; }
-        .user-card.active-nut { border-color: var(--nut); box-shadow: 0 0 10px var(--nut); background: #251a21; }
-        .save-tag { background: rgba(255, 215, 0, 0.05); border: 1px dashed var(--save); padding: 5px; border-radius: 10px; margin-top: 8px; font-size: 0.85rem; font-weight: bold; color: var(--save); }
-        .menu-wrap { background: var(--card); padding: 15px; border-radius: 20px; border: 1px solid #2d3436; margin-bottom: 15px; }
-        .label { font-size: 0.7rem; color: #666; display: block; margin: 12px 0 6px 0; font-weight: bold; text-transform: uppercase; border-left: 3px solid #444; padding-left: 8px; }
-        .btn-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-        .tag-btn { background: #25292e; border: 1px solid #333; color: #ccc; padding: 10px 2px; border-radius: 10px; font-size: 0.75rem; cursor: pointer; }
-        .record-box { background: var(--card); padding: 20px; border-radius: 20px; border: 1px solid #2d3436; margin-bottom: 15px; }
-        input, select { background: #0d0f11; border: 1px solid #333; color: #fff; width: 100%; padding: 12px; border-radius: 10px; margin-bottom: 8px; font-size: 1rem; outline: none; }
-        .btn-main { width: 100%; border: none; padding: 16px; border-radius: 12px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-tin { background: var(--tin); color: #000; }
-        .btn-nut { background: var(--nut); color: #fff; }
-        .btn-shared { background: var(--shared); color: #000; }
-        .hist-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #25292e; align-items: center; }
+        .container { max-width: 500px; margin: auto; padding-bottom: 50px; position: relative; }
+        .sync-fab { position: fixed; top: 20px; right: 20px; width: 50px; height: 50px; background: rgba(22, 26, 29, 0.8); border: 2px solid var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; z-index: 999; box-shadow: 0 0 15px rgba(0, 255, 136, 0.4); backdrop-filter: blur(5px); transition: 0.3s; }
+        .spinning { animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .live-clock { text-align: center; margin-bottom: 10px; background: var(--card); padding: 15px; border-radius: 20px; border: 1px solid #333; }
+        .time { font-size: 1.8rem; font-weight: bold; color: var(--accent); text-shadow: 0 0 15px rgba(0, 255, 136, 0.4); }
+        .sync-status { font-size: 0.7rem; color: #888; text-align: center; margin-bottom: 10px; }
+        .shared-card { background: linear-gradient(135deg, #1a1d21, #000); border-radius: 20px; padding: 15px; text-align: center; border: 1px solid #333; margin-bottom: 12px; cursor: pointer; transition: 0.3s; }
+        .shared-card.active { border-color: var(--shared); box-shadow: 0 0 15px rgba(162, 155, 254, 0.3); }
+        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+        .user-card { background: var(--card); padding: 15px; border-radius: 20px; border: 1px solid #333; text-align: center; cursor: pointer; transition: 0.3s; }
+        .user-card.active-tin { border-color: var(--tin); box-shadow: 0 0 15px rgba(0, 210, 255, 0.3); }
+        .user-card.active-nut { border-color: var(--nut); box-shadow: 0 0 15px rgba(255, 105, 180, 0.3); }
+        .save-tag { background: rgba(255, 215, 0, 0.05); border: 1px dashed var(--save); padding: 5px; border-radius: 10px; margin-top: 8px; font-size: 0.85rem; color: var(--save); }
+        .menu-wrap { background: var(--card); padding: 15px; border-radius: 25px; border: 1px solid #2d3436; margin-bottom: 15px; }
+        .label { font-size: 0.75rem; color: #555; display: block; margin: 15px 0 8px 0; font-weight: bold; border-left: 4px solid var(--accent); padding-left: 10px; }
+        .btn-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .tag-btn { background: #25292e; border: 1px solid #333; color: #ddd; padding: 12px 2px; border-radius: 12px; font-size: 0.8rem; cursor: pointer; transition: 0.2s; }
+        .record-box { background: var(--card); padding: 20px; border-radius: 25px; border: 1px solid #2d3436; margin-bottom: 15px; }
+        input, select { background: #0d0f11; border: 1px solid #333; color: #fff; width: 100%; padding: 14px; border-radius: 15px; margin-bottom: 10px; font-size: 1rem; outline: none; }
+        .btn-main { width: 100%; border: none; padding: 18px; border-radius: 18px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .btn-tin { background: linear-gradient(to right, #00c6ff, #0072ff); color: #fff; }
+        .btn-nut { background: linear-gradient(to right, #ff75c3, #ffa647); color: #fff; }
+        .btn-shared { background: linear-gradient(to right, #a29bfe, #6c5ce7); color: #fff; }
+        .hist-item { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #25292e; align-items: center; }
+        .daily-split { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .daily-box-mini { background: #0d0f11; padding: 12px; border-radius: 18px; border: 1px solid #333; text-align: center; }
+        .all-btn { background: #25292e; border: 1px solid #444; color: #888; padding: 6px 12px; border-radius: 10px; font-size: 0.75rem; cursor: pointer; transition: 0.3s; }
+        .all-btn.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: bold; }
     </style>
 </head>
-     <link rel="apple-touch-icon" href="https://flaticon.com">
-     <link rel="icon" href="https://flaticon.com">
-
 <body>
+
+<div class="sync-fab" id="sync-icon" onclick="pullData()">🔄</div>
 
 <div class="container">
     <div class="live-clock">
         <div class="time" id="clock-t">00:00:00</div>
-        <div style="font-size:0.8rem; color:#888" id="clock-d"></div>
+        <div style="font-size:0.85rem; color:#666; margin-top:5px;" id="clock-d"></div>
     </div>
-    <div class="sync-status" id="sync-status">ระบบ Cloud พร้อมเชื่อมต่อ</div>
+    <div class="sync-status" id="sync-status">Cloud System Online</div>
 
-    <!-- แถบเลือก กองกลาง -->
     <div class="shared-card" id="v-shared" onclick="selectUser('กองกลาง')">
-        <div style="font-size: 0.7rem; color: #888;">💰 ยอดกองกลางสะสม</div>
-        <div style="font-size: 1.5rem; font-weight: bold; color: var(--shared);" id="bal-shared">฿ 0</div>
+        <div style="font-size: 0.75rem; color: #888;">💰 ยอดกองกลางสะสม</div>
+        <div style="font-size: 1.6rem; font-weight: bold; color: var(--shared);" id="bal-shared">฿ 0</div>
     </div>
 
-    <!-- แถบเลือก บุคคล -->
     <div class="dashboard">
         <div class="user-card" id="v-tin" onclick="selectUser('ติณห์ภัทร')">
-            <div style="font-size:0.75rem; color:var(--tin)">ติณห์ภัทร</div>
-            <div id="bal-tin" style="font-weight:bold">฿ 0</div>
+            <div style="font-size:0.8rem; color:var(--tin); font-weight:bold;">ติณห์ภัทร</div>
+            <div id="bal-tin" style="font-size: 1.2rem; font-weight:bold">฿ 0</div>
             <div class="save-tag">ออม: <span id="v-tin-s">฿ 0</span></div>
         </div>
-        <div class="user-card" id="v-nut" onclick="selectUser('นัฐณววรณ')">
-            <div style="font-size:0.75rem; color:var(--nut)">นัฐณววรณ</div>
-            <div id="bal-nut" style="font-weight:bold">฿ 0</div>
+        <div class="user-card" id="v-nut" onclick="selectUser('นัฐณวรรณ')">
+            <div style="font-size:0.8rem; color:var(--nut); font-weight:bold;">นัฐณวรรณ</div>
+            <div id="bal-nut" style="font-size: 1.2rem; font-weight:bold">฿ 0</div>
             <div class="save-tag">ออม: <span id="v-nut-s">฿ 0</span></div>
         </div>
     </div>
 
-    <!-- รายการด่วน (ล็อคค่าทั้งหมด) -->
     <div class="menu-wrap">
-        <span class="label">💵 การเงิน & ออม & กองกลาง</span>
+        <span class="label">💴 การเงิน & ออม & กองกลาง</span>
         <div class="btn-grid">
-            <button class="tag-btn" onclick="quick('เงินเดือน', 'income')">💰 รับเงินเดือน</button>
-			<button class="tag-btn" onclick="quick('งานเสริม/OT', 'income')">💰 งานเสริม (OT)</button>
+            <button class="tag-btn" onclick="quick('เงินเดือน', 'income')">💰 เงินเดือน</button>
+            <button class="tag-btn" onclick="quick('งานเสริม (OT)', 'income')">💸 งานเสริม</button>
             <button class="tag-btn" onclick="quick('ฝากเงินออม', 'save')" style="color:var(--save)">💎 ฝากออม</button>
             <button class="tag-btn" onclick="quick('ถอนเงินออม', 'withdraw_save')" style="color:var(--save)">🔓 ถอนออม</button>
             <button class="tag-btn" onclick="quick('โอนเข้ากองกลาง', 'transfer_in')" style="color:var(--shared)">📩 เข้ากลาง</button>
             <button class="tag-btn" onclick="quick('ถอนเงินกองกลาง', 'transfer_out')" style="color:var(--shared)">🔓 ถอนกลาง</button>
-            <button class="tag-btn" onclick="pullData()">🔄 ดึงข้อมูลใหม่</button>
         </div>
         <span class="label">🚗 เดินทาง & รถ</span>
         <div class="btn-grid">
-            <button class="tag-btn" onclick="quick('ค่ารถยนต์', 'expense')">⛽ รถยนต์</button>
+            <button class="tag-btn" onclick="quick('ค่ารถยนต์', 'expense')">🚗 รถยนต์</button>
             <button class="tag-btn" onclick="quick('ค่าน้ำมันรถ', 'expense')">⛽ น้ำมัน</button>
-            <button class="tag-btn" onclick="quick('Easy Pass', 'expense')">🛣️ Easy Pass</button>
-            <button class="tag-btn" onclick="quick('ค่าที่จอดรถ', 'expense')">🅿️ ที่จอดรถ</button>
+            <button class="tag-btn" onclick="quick('Easy Pass', 'expense')">🛣️ Pass</button>
+            <button class="tag-btn" onclick="quick('ค่าที่จอดรถ', 'expense')">🅿️ ที่จอด</button>
             <button class="tag-btn" onclick="quick('Taxi/Grab', 'expense')">🚖 Taxi</button>
         </div>
-        <span class="label">🛍️ ส่วนตัว & บิล & สัตว์</span>
+        <span class="label">🛍️ ส่วนตัว & บิล</span>
         <div class="btn-grid">
-            <button class="tag-btn" onclick="quick('บิลต่างๆ', 'expense')">⚡ บิลต่างๆ</button>
-			<button class="tag-btn" onclick="quick('เน็ต', 'expense')">⚡ เน็ต</button>
-			<button class="tag-btn" onclick="quick('ค่าไฟ', 'expense')">⚡ ค่าไฟ</button>
-			<button class="tag-btn" onclick="quick('ค่าน้ำ', 'expense')">⚡ ค่าน้ำ</button>
-			<button class="tag-btn" onclick="quick('ค่าอาหาร', 'expense')">🍚 อาหาร</button>
-            <button class="tag-btn" onclick="quick('อาหารสัตว์', 'expense')">🐾 อาหารสัตว์</button>
-            <button class="tag-btn" onclick="quick('PS5/เกม', 'expense')">🎮 PS5/เกม</button>
-            <button class="tag-btn" onclick="quick('ของส่วนตัว/เสื้อผ้า', 'expense')">👕 ส่วนตัว</button>
-            <button class="tag-btn" onclick="quick('ภาษี/ประกัน', 'expense')">📄 ประกัน</button>
-			
+            <button class="tag-btn" onclick="quick('ค่าอาหาร', 'expense')">🍚 อาหาร</button>
+            <button class="tag-btn" onclick="quick('บิลต่างๆ', 'expense')">⚡ บิล</button>
+            <button class="tag-btn" onclick="quick('ค่าไฟ', 'expense')">⚡ ไฟ</button>
+            <button class="tag-btn" onclick="quick('ค่าน้ำ', 'expense')">💧 น้ำ</button>
+            <button class="tag-btn" onclick="quick('อาหารสัตว์', 'expense')">🐾 สัตว์</button>
+            <button class="tag-btn" onclick="quick('PS5/เกม', 'expense')">🎮 เกม</button>
         </div>
     </div>
 
     <div class="record-box">
-        <div style="text-align:center; font-size:0.8rem; margin-bottom:10px; color:#888;">บันทึกให้: <span id="cur-target" style="font-weight:bold">ติณห์ภัทร</span></div>
+        <div style="text-align:center; font-size:0.85rem; margin-bottom:12px; color:#aaa;">บันทึกให้: <span id="cur-target" style="font-weight:bold">ติณห์ภัทร</span></div>
         <input type="text" id="desc" placeholder="รายการ">
         <input type="number" id="amt" placeholder="จำนวนเงิน ฿" inputmode="decimal">
         <select id="type">
@@ -115,154 +113,183 @@
         <button id="save-btn" class="btn-main btn-tin" onclick="saveData()">🚀 บันทึกข้อมูล</button>
     </div>
 
-    <div style="background:#161a1d; padding:15px; border-radius:20px; border:1px solid #333;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-            <div style="font-size:0.8rem; color:#666;">ประวัติ: <span id="v-label"></span></div>
-            <input type="date" id="date-f" style="width:auto; margin:0; padding:5px; font-size:0.75rem;" onchange="render()">
+    <div style="background:#161a1d; padding:20px; border-radius:25px; border:1px solid #333;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <div style="font-size:0.85rem; color:#888;">ประวัติ: <span id="v-label" style="font-weight:bold"></span></div>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <button id="btn-all" class="all-btn" onclick="toggleAll()">ดูทั้งหมด</button>
+                <input type="date" id="date-f" style="width:auto; margin:0; padding:8px; font-size:0.8rem; border-radius:10px;" onchange="render(true)">
+            </div>
+        </div>
+        
+        <div class="daily-split">
+            <div class="daily-box-mini">
+                <div id="daily-label-tin" style="font-size: 0.8rem; color: #888;">รายจ่ายวันนี้ ติณห์ภัทร</div>
+                <div id="daily-tin" style="font-size: 1.1rem; font-weight: bold; color: #ff4b2b;">฿ 0.00</div>
+            </div>
+            <div class="daily-box-mini">
+                <div id="daily-label-nut" style="font-size: 0.8rem; color: #888;">รายจ่ายวันนี้ นัฐณวรรณ</div>
+                <div id="daily-nut" style="font-size: 1.1rem; font-weight: bold; color: #ff4b2b;">฿ 0.00</div>
+            </div>
         </div>
         <div id="list"></div>
     </div>
 </div>
 
-<<script>
-    // 1. ใส่ URL ของ Google Apps Script ของคุณตรงนี้
+<script>
     const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbxzjQiqsUGBWCqbvO92Oh9Q5-IFpoMjXItFV2odcbnSJDo2fvnyKN3v8RlgmamAp7QWhQ/exec';
     const LOCAL_KEY = 'family_wallet_master_final_stable';
-    
     let db = JSON.parse(localStorage.getItem(LOCAL_KEY)) || [];
     let current = 'ติณห์ภัทร';
+    let isShowAll = false;
+
+    function getThaiDate(dateObj) {
+        const d = new Date(dateObj);
+        return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
+    }
 
     function clock() {
         const now = new Date();
-        const t = document.getElementById('clock-t');
-        const d = document.getElementById('clock-d');
-        if(t) t.innerText = now.toLocaleTimeString('th-TH');
-        if(d) d.innerText = now.toLocaleDateString('th-TH', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+        document.getElementById('clock-t').innerText = now.toLocaleTimeString('th-TH');
+        document.getElementById('clock-d').innerText = now.toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     }
     setInterval(clock, 1000); clock();
 
     async function pullData() {
-        if (!GOOGLE_SHEET_URL.startsWith('http')) return;
-        document.getElementById('sync-status').innerText = '🔄 กำลังซิงค์ข้อมูลจาก Cloud...';
+        const icon = document.getElementById('sync-icon');
+        icon.classList.add('spinning');
         try {
             const res = await fetch(GOOGLE_SHEET_URL);
-            const cloudData = await res.json();
-            db = cloudData;
+            db = await res.json();
             localStorage.setItem(LOCAL_KEY, JSON.stringify(db));
-            document.getElementById('sync-status').innerText = '✅ ข้อมูลเป็นปัจจุบัน';
+            document.getElementById('sync-status').innerText = '✅ Cloud Updated';
             render();
-        } catch (e) {
-            document.getElementById('sync-status').innerText = '⚠️ โหมดออฟไลน์';
-            render();
-        }
+        } catch (e) { render(); } finally { setTimeout(() => icon.classList.remove('spinning'), 800); }
     }
 
-    // ฟังก์ชันเลือกผู้ใช้ (แก้ไขเพื่อให้เปลี่ยนชื่อและสีปุ่มได้)
     function selectUser(u) {
         current = u;
         document.getElementById('cur-target').innerText = u;
-        // ปรับสีชื่อตามผู้ใช้
-        const colorMap = { 'ติณห์ภัทร': 'var(--tin)', 'นัฐณววรณ': 'var(--nut)', 'กองกลาง': 'var(--shared)' };
+        const colorMap = { 'ติณห์ภัทร': 'var(--tin)', 'นัฐณวรรณ': 'var(--nut)', 'กองกลาง': 'var(--shared)' };
         document.getElementById('cur-target').style.color = colorMap[u] || 'white';
-        
-        // ปรับสีปุ่มบันทึก
-        const btnClassMap = { 'ติณห์ภัทร': 'btn-tin', 'นัฐณววรณ': 'btn-nut', 'กองกลาง': 'btn-shared' };
-        const saveBtn = document.getElementById('save-btn');
-        saveBtn.className = 'btn-main ' + (btnClassMap[u] || '');
-        
+        const btnClassMap = { 'ติณห์ภัทร': 'btn-tin', 'นัฐณวรรณ': 'btn-nut', 'กองกลาง': 'btn-shared' };
+        document.getElementById('save-btn').className = 'btn-main ' + (btnClassMap[u] || '');
         render();
     }
 
-    function quick(n, t) { 
-        document.getElementById('desc').value = n; 
-        document.getElementById('type').value = t; 
-        document.getElementById('amt').focus(); 
+    function toggleAll() {
+        isShowAll = !isShowAll;
+        if(isShowAll) document.getElementById('date-f').value = ''; 
+        else document.getElementById('date-f').value = getThaiDate(new Date());
+        render();
     }
+
+    function quick(n, t) { document.getElementById('desc').value = n; document.getElementById('type').value = t; document.getElementById('amt').focus(); }
 
     async function saveData() {
-        const d = document.getElementById('desc').value; 
-        const t = document.getElementById('type').value; 
-        const a = parseFloat(document.getElementById('amt').value);
+        const d = document.getElementById('desc').value; const t = document.getElementById('type').value; const a = parseFloat(document.getElementById('amt').value);
         if(!d || !a) return alert('ใส่ข้อมูลให้ครบ');
-        
-        const entry = { id: Date.now().toString(), owner: current, desc: d, type: t, amt: a, time: new Date().toISOString() };
-        db.push(entry);
-        localStorage.setItem(LOCAL_KEY, JSON.stringify(db));
-        render();
-        document.getElementById('desc').value = ''; document.getElementById('amt').value = '';
-
-        try {
-            await fetch(GOOGLE_SHEET_URL, { method: 'POST', body: JSON.stringify(entry), mode: 'no-cors' });
-            document.getElementById('sync-status').innerText = '✅ บันทึก Cloud สำเร็จ';
-        } catch (e) {
-            document.getElementById('sync-status').innerText = '❌ บันทึก Cloud ไม่สำเร็จ';
-        }
+        const entry = { id: Date.now().toString(), owner: current, desc: d, type: t, amt: a, time: new Date().toLocaleString('sv-SE') };
+        db.push(entry); localStorage.setItem(LOCAL_KEY, JSON.stringify(db));
+        render(); document.getElementById('desc').value = ''; document.getElementById('amt').value = '';
+        try { await fetch(GOOGLE_SHEET_URL, { method: 'POST', body: JSON.stringify(entry), mode: 'no-cors' }); pullData(); } catch (e) {}
     }
 
     async function del(id) {
-        if(!confirm('ลบรายการนี้ทั้งในเครื่องและ Cloud?')) return;
-        db = db.filter(i => i.id != id);
-        localStorage.setItem(LOCAL_KEY, JSON.stringify(db));
+        if(!confirm('ลบรายการนี้?')) return;
+        db = db.filter(i => i.id != id); localStorage.setItem(LOCAL_KEY, JSON.stringify(db));
         render();
-
-        try {
-            await fetch(`${GOOGLE_SHEET_URL}?action=delete&id=${id}&t=${Date.now()}`, { mode: 'no-cors' });
-            document.getElementById('sync-status').innerText = '🗑️ ลบใน Cloud สำเร็จ';
-        } catch (e) {
-            document.getElementById('sync-status').innerText = '❌ ลบใน Cloud ไม่สำเร็จ';
-        }
+        try { await fetch(`${GOOGLE_SHEET_URL}?action=delete&id=${id}`, { mode: 'no-cors' }); pullData(); } catch (e) {}
     }
 
-    function render() {
+    function render(isFromPicker = false) {
+        if(isFromPicker) isShowAll = false;
+        const list = document.getElementById('list'); list.innerHTML = '';
         const fDate = document.getElementById('date-f').value;
-        document.getElementById('v-label').innerText = current;
+        const vLabel = document.getElementById('v-label');
+        vLabel.innerText = current;
+        vLabel.style.color = (current === 'ติณห์ภัทร') ? 'var(--tin)' : ((current === 'นัฐณวรรณ') ? 'var(--nut)' : 'var(--shared)');
 
-        // อัปเดตสถานะ Active ของการ์ดผู้ใช้
+        document.getElementById('btn-all').className = 'all-btn' + (isShowAll ? ' active' : '');
+        document.getElementById('btn-all').innerText = isShowAll ? 'ย้อนกลับ' : 'ดูทั้งหมด';
         document.getElementById('v-shared').className = 'shared-card' + (current === 'กองกลาง' ? ' active' : '');
         document.getElementById('v-tin').className = 'user-card' + (current === 'ติณห์ภัทร' ? ' active-tin' : '');
-        document.getElementById('v-nut').className = 'user-card' + (current === 'นัฐณววรณ' ? ' active-nut' : '');
+        document.getElementById('v-nut').className = 'user-card' + (current === 'นัฐณวรรณ' ? ' active-nut' : '');
 
-        let w = { 'ติณห์ภัทร': 0, 'นัฐณววรณ': 0, 'กองกลาง': 0 }; 
-        let v = { 'ติณห์ภัทร': 0, 'นัฐณววรณ': 0 };
+        // --- เริ่มต้นคำนวณเงินใหม่ทุกครั้ง ---
+        let balances = { 'ติณห์ภัทร': 0, 'นัฐณวรรณ': 0, 'กองกลาง': 0 }; 
+        let savings = { 'ติณห์ภัทร': 0, 'นัฐณวรรณ': 0 };
+        let dTin = 0, dNut = 0;
+        const today = getThaiDate(new Date());
+        const targetDate = fDate || today;
 
         db.forEach(i => {
             const amt = parseFloat(i.amt) || 0;
-            if(i.type === 'income') w[i.owner] += amt;
-            else if(i.type === 'expense') w[i.owner] -= amt;
-            else if(i.type === 'save') { w[i.owner] -= amt; v[i.owner] += amt; }
-            else if(i.type === 'withdraw_save') { v[i.owner] -= amt; w[i.owner] += amt; }
-            else if(i.type === 'transfer_in') { w[i.owner] -= amt; w['กองกลาง'] += amt; }
-            else if(i.type === 'transfer_out') { w['กองกลาง'] -= amt; w[i.owner] += amt; }
-        });
-
-        document.getElementById('bal-tin').innerText = '฿ ' + w['ติณห์ภัทร'].toLocaleString();
-        document.getElementById('bal-nut').innerText = '฿ ' + w['นัฐณววรณ'].toLocaleString();
-        document.getElementById('v-tin-s').innerText = '฿ ' + v['ติณห์ภัทร'].toLocaleString();
-        document.getElementById('v-nut-s').innerText = '฿ ' + v['นัฐณววรณ'].toLocaleString();
-        document.getElementById('bal-shared').innerText = '฿ ' + w['กองกลาง'].toLocaleString();
-
-        const listDiv = document.getElementById('list');
-        if(!listDiv) return;
-        listDiv.innerHTML = '';
-
-        db.filter(i => {
-            const isU = i.owner === current || (current === 'กองกลาง' && (i.type.includes('transfer')));
-            if (!fDate) return isU;
-            const d = new Date(i.time);
-            const itemDate = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-            return isU && itemDate === fDate;
-        }).sort((a,b) => b.id - a.id).forEach(i => {
-            let pfx = (i.type==='income' || i.type==='withdraw_save' || (i.type==='transfer_out' && i.owner===current) || (i.type==='transfer_in' && current==='กองกลาง')) ? '+' : '-';
-            let clr = (i.type==='save' || i.type==='withdraw_save') ? 'var(--save)' : (pfx==='+' ? '#00ff88' : '#ff4757');
-            if (i.type.includes('transfer')) clr = 'var(--shared)';
+            const itemDate = getThaiDate(i.time);
+            const ownerRaw = i.owner || "";
             
-            listDiv.innerHTML += `<div class="hist-item">
-                <div><strong>${i.desc}</strong><br><small style="color:#666">${new Date(i.time).toLocaleString('th-TH')} | <span onclick="del('${i.id}')" style="color:red; cursor:pointer;">ลบ</span></small></div>
-                <div style="color:${clr}; font-weight:bold">${pfx}${parseFloat(i.amt).toLocaleString()}</div>
-            </div>`;
+            // --- ระบบคัดกรองชื่อแบบ Keyword (วรรณ/ววรณ/ติณห์) ---
+            let ownerKey = "";
+            if (ownerRaw.includes('ติณห์')) ownerKey = 'ติณห์ภัทร';
+            else if (ownerRaw.includes('นัฐ')) ownerKey = 'นัฐณวรรณ';
+            else if (ownerRaw.includes('กลาง')) ownerKey = 'กองกลาง';
+
+            // 1. คำนวณยอดเงินรายคนและออม
+            if (ownerKey) {
+                if (i.type === 'income') balances[ownerKey] += amt;
+                else if (i.type === 'expense') {
+                    balances[ownerKey] -= amt;
+                    if (itemDate === targetDate) {
+                        if (ownerKey === 'ติณห์ภัทร') dTin += amt;
+                        if (ownerKey === 'นัฐณวรรณ') dNut += amt;
+                    }
+                } else if (i.type === 'save') { balances[ownerKey] -= amt; savings[ownerKey] += amt; }
+                else if (i.type === 'withdraw_save') { savings[ownerKey] -= amt; balances[ownerKey] += amt; }
+                else if (i.type === 'transfer_in') { balances[ownerKey] -= amt; balances['กองกลาง'] += amt; }
+                else if (i.type === 'transfer_out') { balances['กองกลาง'] -= amt; balances[ownerKey] += amt; }
+            }
+
+            // 2. แสดงประวัติ (กรองตามคนที่เลือก และวันที่)
+            let isMatch = false;
+            if (current === 'กองกลาง') {
+                if (ownerKey === 'กองกลาง' || i.type === 'transfer_in' || i.type === 'transfer_out') isMatch = true;
+            } else {
+                if (current === ownerKey) isMatch = true;
+            }
+
+            if (isMatch) {
+                let show = isShowAll || (fDate && itemDate === fDate) || (!fDate && itemDate === today);
+                if (show) {
+                    const div = document.createElement('div');
+                    div.className = 'hist-item';
+                    div.onclick = () => del(i.id);
+                    
+                    let color = '#ff4b2b'; let sign = '-';
+                    if (current === 'กองกลาง') {
+                        if (i.type === 'transfer_in') { color = 'var(--shared)'; sign = '+'; }
+                        else if (i.type === 'transfer_out') { color = '#ff4b2b'; sign = '-'; }
+                        else if (i.type === 'income') { color = 'var(--accent)'; sign = '+'; }
+                    } else {
+                        if (['income', 'withdraw_save', 'transfer_out'].includes(i.type)) { color = 'var(--accent)'; sign = '+'; }
+                    }
+
+                    div.innerHTML = `<div><div style="font-size:0.9rem; font-weight:500;">${i.desc}</div><div style="font-size:0.7rem; color:#666">${new Date(i.time).toLocaleString('th-TH')}</div></div>
+                                     <div style="color:${color}; font-weight:bold;">${sign}${amt.toLocaleString()}</div>`;
+                    list.prepend(div);
+                }
+            }
         });
+
+        document.getElementById('bal-shared').innerText = `฿ ${balances['กองกลาง'].toLocaleString()}`;
+        document.getElementById('bal-tin').innerText = `฿ ${balances['ติณห์ภัทร'].toLocaleString()}`;
+        document.getElementById('bal-nut').innerText = `฿ ${balances['นัฐณวรรณ'].toLocaleString()}`;
+        document.getElementById('v-tin-s').innerText = `฿ ${savings['ติณห์ภัทร'].toLocaleString()}`;
+        document.getElementById('v-nut-s').innerText = `฿ ${savings['นัฐณวรรณ'].toLocaleString()}`;
+        document.getElementById('daily-tin').innerText = `฿ ${dTin.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+        document.getElementById('daily-nut').innerText = `฿ ${dNut.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
     }
 
-    pullData(); 
-    selectUser('ติณห์ภัทร'); // เริ่มต้นที่ติณห์ภัทร
+    window.onload = () => { document.getElementById('date-f').value = getThaiDate(new Date()); pullData(); };
 </script>
+</body>
+</html>
